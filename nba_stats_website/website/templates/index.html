@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NBA Stats</title>
+    <style>
+        .container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-gap: 20px;
+        }
+        .category {
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        .category h2 {
+            text-align: center;
+        }
+        .category .list {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>NBA Stats</h1>
+    </header>
+    <div class="container">
+        {% for category, stats in data.items %}
+        <div class="category">
+            <h2>{{ category }}</h2>
+            <div class="list">
+                <h3>Top 5</h3>
+                <ul>
+                    {% for player in stats.top_5 %}
+                    <li>{{ player.rank }}. {{ player.player }} - {{ player.value }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="list">
+                <h3>Bottom 5</h3>
+                <ul>
+                    {% for player in stats.bottom_5 %}
+                    <li>{{ player.rank }}. {{ player.player }} - {{ player.value }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
