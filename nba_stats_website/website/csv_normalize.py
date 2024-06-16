@@ -2,8 +2,8 @@ import csv
 import numpy as np
 
 def normalize_data(data):
-    min_value = np.min(data)
-    max_value = np.max(data)
+    min_value = np.min(data, axis=0)
+    max_value = np.max(data, axis=0)
     normalized_data = (data - min_value) / (max_value - min_value)
     return normalized_data
 
@@ -32,8 +32,13 @@ np_data = np.array(filtered_data)
 numeric_columns = np_data[:, 2:].astype(float)
 
 # Normalize the data (skip the first two columns which are PLAYER_ID and PLAYER_NAME)
-normalized_data = np.copy(np_data)
-normalized_data[:, 2:] = normalize_data(numeric_columns)
+normalized_numeric_columns = normalize_data(numeric_columns)
+
+# Round the normalized numeric columns to 3 decimal places
+rounded_normalized_numeric_columns = np.round(normalized_numeric_columns, decimals=3)
+
+# Combine the non-numeric columns and rounded normalized numeric columns
+normalized_data = np.column_stack((np_data[:, :2], rounded_normalized_numeric_columns))
 
 # Combine the headers and normalized data
 normalized_data_with_headers = [columns_to_keep] + normalized_data.tolist()
