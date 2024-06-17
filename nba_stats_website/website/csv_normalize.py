@@ -1,5 +1,6 @@
 import csv
 import numpy as np
+from fuzzywuzzy import fuzz
 
 def normalize_data(data):
     min_value = np.min(data, axis=0)
@@ -7,23 +8,55 @@ def normalize_data(data):
     normalized_data = (data - min_value) / (max_value - min_value)
     return normalized_data
 
-# Read the data from the CSV file
+# Read the data from the first CSV file
 with open('player_stats.csv', 'r') as file:
     reader = csv.reader(file)
-    headers = next(reader)
-    data = list(reader)
+    headers1 = next(reader)
+    data1 = list(reader)
+
+# Read the data from the second CSV file
+with open('per.csv', 'r') as file:
+    reader = csv.reader(file)
+    headers2 = next(reader)
+    data2 = list(reader)
+
+# Create dictionaries to store the data from both files
+data1_dict = {row[headers1.index('PLAYER_NAME')]: row for row in data1}
+data2_dict = {row[headers2.index('Player')]: row for row in data2}
+
+# Set a threshold for the fuzzy matching ratio (e.g., 90)
+threshold = 90
+
+# Create a dictionary to store the merged data
+merged_data = {}
+
+# Iterate over each player in data1
+for player_name, row1 in data1_dict.items():
+    # Find the best match for the player name using fuzzy string matching
+    best_match = None
+    best_ratio = 0
+    for name, row2 in data2_dict.items():
+        ratio = fuzz.ratio(player_name, name)
+        if ratio > best_ratio:
+            best_match = name
+            best_ratio = ratio
+    
+    # Check if the best match ratio is above the threshold
+    if best_ratio >= threshold:
+        merged_data[player_name] = row1 + data2_dict[best_match]
 
 # Define the columns to keep
 columns_to_keep = [
-    'PLAYER_ID', 'PLAYER_NAME', 'GP', 'MIN', 'FGM', 'FGA', 'FG_PCT', 'FG3M', 'FG3A', 'FG3_PCT',
-    'FTM', 'FTA', 'OREB', 'DREB', 'REB', 'AST', 'TOV', 'STL', 'BLK', 'PTS', 'PLUS_MINUS'
+    'PLAYER_ID', 'PLAYER_NAME', 'GP', 'MIN', 'FG_PCT', 'FG3_PCT',
+    'FT_PCT', 'OREB', 'DREB', 'AST', 'TOV', 'STL', 'BLK', 'PTS',
+    'PLUS_MINUS', 'WS/48', 'BPM', 'VORP'
 ]
 
 # Find the indices of the columns to keep
-indices_to_keep = [headers.index(col) for col in columns_to_keep]
+indices_to_keep = [headers1.index(col) if col in headers1 else len(headers1) + headers2.index(col) for col in columns_to_keep]
 
 # Remove unnecessary columns
-filtered_data = [[row[i] for i in indices_to_keep] for row in data]
+filtered_data = [[row[i] for i in indices_to_keep] for row in merged_data.values()]
 
 # Convert the data to a NumPy array
 np_data = np.array(filtered_data)
@@ -43,9 +76,9 @@ normalized_data = np.column_stack((np_data[:, :2], rounded_normalized_numeric_co
 # Combine the headers and normalized data
 normalized_data_with_headers = [columns_to_keep] + normalized_data.tolist()
 
-# Save the normalized data to the 'normalized_player_stats.csv' file
-with open('normalized_player_stats.csv', 'w', newline='') as file:
+# Save the normalized data to the 'merged_normalized_player_stats.csv' file
+with open('merged_normalized_player_stats.csv', 'w', newline='') as file:
     writer = csv.writer(file)
     writer.writerows(normalized_data_with_headers)
 
-print("Normalized data saved to 'normalized_player_stats.csv'")
+print("Merged and normalized data saved to 'merged_normalized_player_stats.csv'")
