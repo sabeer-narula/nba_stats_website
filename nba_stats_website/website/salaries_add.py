@@ -1195,11 +1195,14 @@ with open('normalized_player_stats.csv', 'r') as file:
 # Open a new CSV file to write the updated data
 with open('updated_basketball_data.csv', 'w', newline='') as file:
     writer = csv.writer(file)
-
+    
     # Write the header row with the added "SALARY" column
     header = rows[0] + ['SALARY']
     writer.writerow(header)
-
+    
+    # Set a threshold for the fuzzy matching ratio (e.g., 90)
+    threshold = 90
+    
     # Iterate over each row in the basketball data (excluding the header)
     for row in rows[1:]:
         player_name = row[1]  # Assuming the player name is in the second column
@@ -1213,8 +1216,11 @@ with open('updated_basketball_data.csv', 'w', newline='') as file:
                 best_match = name
                 best_ratio = ratio
         
-        # Get the salary for the best matched player name
-        salary = player_salaries.get(best_match, '')
+        # Check if the best match ratio is above the threshold
+        if best_ratio >= threshold:
+            salary = player_salaries.get(best_match, '')
+        else:
+            salary = ''
         
         updated_row = row + [salary]  # Add the salary to the row
         writer.writerow(updated_row)

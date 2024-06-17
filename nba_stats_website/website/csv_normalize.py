@@ -16,7 +16,7 @@ with open('player_stats.csv', 'r') as file:
 # Define the columns to keep
 columns_to_keep = [
     'PLAYER_ID', 'PLAYER_NAME', 'GP', 'MIN', 'FGM', 'FGA', 'FG_PCT', 'FG3M', 'FG3A', 'FG3_PCT',
-    'FTM', 'OREB', 'DREB', 'REB', 'AST', 'TOV', 'STL', 'BLK', 'PTS', 'PLUS_MINUS'
+    'FTM', 'FTA', 'OREB', 'DREB', 'REB', 'AST', 'TOV', 'STL', 'BLK', 'PTS', 'PLUS_MINUS'
 ]
 
 # Find the indices of the columns to keep
