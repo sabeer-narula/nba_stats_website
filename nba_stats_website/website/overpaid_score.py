@@ -102,5 +102,48 @@ def main():
     for i, player in enumerate(valid_players[:25], start=1):
         print(f"{i}. {player['name']}: ${player['salary']}: Underpaid Metric: {player['overpaid_metric']:.2f}")
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()
+
+def get_overpaid_underpaid_data():
+    players = []
+    with open('merged_normalized_player_stats.csv', 'r') as file:
+        csv_reader = csv.DictReader(file)
+        for row in csv_reader:
+            # Convert numeric values to floats, skipping empty strings
+            for key in row:
+                if key not in ['PLAYER_NAME', 'PLAYER_ID', 'Pos']:
+                    if row[key] != '':
+                        row[key] = float(row[key])
+                    else:
+                        row[key] = 0.0
+
+            # Check if the player has a valid salary
+            if row['SALARY'] > 0:
+                overpaid_metric = calculate_overpaid_metric(row)
+                player_info = {
+                    'name': row['PLAYER_NAME'],
+                    'salary': row['SALARY'],
+                    'GP': row['GP'],
+                    'minutes': row['MIN'],
+                    'overpaid_metric': overpaid_metric
+                }
+                players.append(player_info)
+
+    # Filter players with salary under $10 million for the most overpaid list
+    overpaid_players = [player for player in players if player['salary'] >= 10000000]
+    overpaid_players.sort(key=lambda x: x['overpaid_metric'], reverse=True)
+
+    # Get the 20 highest paid players
+    highest_paid_players = sorted(players, key=lambda x: x['salary'], reverse=True)[:20]
+
+    # Get the top 20 most underpaid players
+    valid_players = [player for player in players if (player['salary'] >= 10000000 and (player['GP']*player['minutes'] > 0.3))]
+    valid_players.sort(key=lambda x: x['overpaid_metric'])
+    underpaid_players = valid_players[:25]
+
+    return {
+        'overpaid_players': overpaid_players[:40],
+        'highest_paid_players': highest_paid_players,
+        'underpaid_players': underpaid_players
+    }

@@ -25,27 +25,36 @@
         <h1>NBA Stats</h1>
     </header>
     <div class="container">
-        {% for category, stats in data.items %}
         <div class="category">
-            <h2>{{ category }}</h2>
+            <h2>Top 20 Most Overpaid Players (Salary >= $10 million)</h2>
             <div class="list">
-                <h3>Top 5</h3>
                 <ul>
-                    {% for player in stats.top_5 %}
-                    <li>{{ player.rank }}. {{ player.player }} - {{ player.value }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <div class="list">
-                <h3>Bottom 5</h3>
-                <ul>
-                    {% for player in stats.bottom_5 %}
-                    <li>{{ player.rank }}. {{ player.player }} - {{ player.value }}</li>
+                    {% for player in data.overpaid_players %}
+                        <li>{{ forloop.counter }}. {{ player.name }}: ${{ player.salary }}: Overpaid Metric: {{ player.overpaid_metric|floatformat:2 }}</li>
                     {% endfor %}
                 </ul>
             </div>
         </div>
-        {% endfor %}
+        <div class="category">
+            <h2>Overpaid Metrics for the 20 Highest Paid Players</h2>
+            <div class="list">
+                <ul>
+                    {% for player in data.highest_paid_players %}
+                        <li>{{ forloop.counter }}. {{ player.name }}: ${{ player.salary }}: Overpaid Metric: {{ player.overpaid_metric|floatformat:2 }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        <div class="category">
+            <h2>Top 20 Most Underpaid Players</h2>
+            <div class="list">
+                <ul>
+                    {% for player in data.underpaid_players %}
+                        <li>{{ forloop.counter }}. {{ player.name }}: ${{ player.salary }}: Underpaid Metric: {{ player.overpaid_metric|floatformat:2 }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
     </div>
 </body>
 </html>
