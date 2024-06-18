@@ -1,50 +1,74 @@
 import csv
-import math
+
+def calculate_age_factor(age):
+    if age < 21:
+        return 0.2
+    elif age > 35:
+        return 5
+    else:
+        return 0.2 + (age - 21) * (5 - 0.2) / (35 - 21)
 
 def calculate_overpaid_metric(player_data):
-    ppg = player_data['PTS']
-    apg = player_data['AST']
-    rpg = player_data['REB']
-    spg = player_data['STL']
-    bpg = player_data['BLK'] * 0.33  # Reduced weighting for blocks
-    topg = player_data['TOV']
+    gp_norm = player_data['GP']
+    min_norm = player_data['MIN']
+    fg_pct_norm = player_data['FG_PCT']
+    fg3_pct_norm = player_data['FG3_PCT']
+    ft_pct_norm = player_data['FT_PCT']
+    oreb_norm = player_data['OREB']
+    dreb_norm = player_data['DREB']
+    ast_norm = player_data['AST']
+    tov_norm = player_data['TOV']
+    stl_norm = player_data['STL']
+    blk_norm = player_data['BLK']
+    pts_norm = player_data['PTS']
+    plus_minus_norm = player_data['PLUS_MINUS']
+    ws_48_norm = player_data['WS/48']
+    bpm_norm = player_data['BPM']
+    vorp_norm = player_data['VORP']
+    per_norm = player_data['PER']
+
+    age = player_data['Age']
+    position = player_data['Pos']
+
+    # Adjust weights based on player's position
+    position_weights = {
+        'C': {'BLK': 0.04, 'PTS': 0.18},
+        'PG': {'AST': 0.04, 'PTS': 0.24},
+        'SG': {'PTS': 0.24, 'AST': 0.04},
+        'SF': {'PTS': 0.22, 'AST': 0.03, 'BLK': 0.03},
+        'PF': {'BLK': 0.03, 'PTS': 0.20, 'AST': 0.02}
+    }
+
+    position_weight = position_weights.get(position, {})
+    blk_weight = position_weight.get('BLK', 0.02)
+    pts_weight = position_weight.get('PTS', 0.21)
+    ast_weight = position_weight.get('AST', 0.02)
+
+    value_score = (
+        (0.02 * gp_norm) + (0.05 * min_norm) + (0.07 * fg_pct_norm) + (0.08 * fg3_pct_norm) +
+        (0.05 * ft_pct_norm) + (0.03 * oreb_norm) + (0.02 * dreb_norm) + (ast_weight * ast_norm) +
+        (-0.05 * tov_norm) + (0.02 * stl_norm) + (blk_weight * blk_norm) + (pts_weight * pts_norm) +
+        (0.8 * plus_minus_norm) + (0.04 * ws_48_norm) + (0.05 * bpm_norm) + (0.07 * vorp_norm) +
+        (0.20 * per_norm)
+    )
+
     salary = player_data['SALARY']
-    minutes_played = player_data['MIN']
-    fg_pct = player_data['FG_PCT']
-    fg3_pct = player_data['FG3_PCT'] if player_data['FG3_PCT'] != '**' else 0
-    ftm = player_data['FTM']
-    fta = player_data['FTA']
+    age_factor = calculate_age_factor(age)
 
-    # Calculate additional metrics
-    efg_pct = (player_data['FGM'] + 0.5 * player_data['FG3M']) / player_data['FGA'] if player_data['FGA'] > 0 else 0
-    ts_pct = ppg / (2 * (player_data['FGA'] + 0.44 * fta)) if (player_data['FGA'] + 0.44 * fta) > 0 else 0
-    per = (ppg + rpg + apg + spg + bpg - topg) * (1 / minutes_played) if minutes_played > 0 else 0
+    overpaid_metric = salary / (value_score * age_factor) if value_score != 0 else 0
+    overpaid_metric = overpaid_metric / 1000000
 
-    # Calculate the overpaid metric
-    try:
-        if minutes_played > 0 and (ppg + apg + rpg + spg + bpg) > 0:
-            overpaid_metric = salary / (minutes_played * (ppg + apg + rpg + spg + bpg) * (efg_pct + fg_pct + fg3_pct + ts_pct) / (topg + 1))
-            overpaid_metric = overpaid_metric / 10000000
-        else:
-            overpaid_metric = 0
-    except ZeroDivisionError:
-        overpaid_metric = 0
-
-    # Determine the stat that contributed the most to the overpaid metric
-    stats = {'PTS': ppg, 'AST': apg, 'REB': rpg, 'STL': spg, 'BLK': 3*bpg, 'TOV': topg}
-    worst_stat = min(stats, key=stats.get)
-
-    return overpaid_metric, worst_stat, per
+    return overpaid_metric
 
 def main():
     # Read the CSV file
-    with open('updated_basketball_data.csv', 'r') as file:
+    with open('merged_normalized_player_stats.csv', 'r') as file:
         csv_reader = csv.DictReader(file)
         players = []
         for row in csv_reader:
             # Convert numeric values to floats, skipping empty strings
             for key in row:
-                if key != 'PLAYER_NAME' and key != 'PLAYER_ID':
+                if key not in ['PLAYER_NAME', 'PLAYER_ID', 'Pos']:
                     if row[key] != '':
                         row[key] = float(row[key])
                     else:
@@ -52,28 +76,26 @@ def main():
 
             # Check if the player has a valid salary
             if row['SALARY'] > 0:
-                overpaid_metric, worst_stat, per = calculate_overpaid_metric(row)
+                overpaid_metric = calculate_overpaid_metric(row)
                 player_info = {
                     'name': row['PLAYER_NAME'],
                     'salary': row['SALARY'],
-                    'overpaid_metric': overpaid_metric,
-                    'worst_stat': worst_stat,
-                    'per': per
+                    'overpaid_metric': overpaid_metric
                 }
                 players.append(player_info)
+
 
     # Filter players with salary under $10 million for the most overpaid list
     overpaid_players = [player for player in players if player['salary'] >= 10000000]
     overpaid_players.sort(key=lambda x: x['overpaid_metric'], reverse=True)
-
     print("Top 20 Most Overpaid Players (Salary >= $10 million):")
     for i, player in enumerate(overpaid_players[:20], start=1):
-        print(f"{i}. {player['name']}: ${player['salary']}: Overpaid Metric: {player['overpaid_metric']:.2f}: Worst Stat: {player['worst_stat']}: PER: {player['per']:.2f}")
+        print(f"{i}. {player['name']}: ${player['salary']}: Overpaid Metric: {player['overpaid_metric']:.2f}")
 
     print("\nOverpaid Metrics for the 20 Highest Paid Players:")
     players.sort(key=lambda x: x['salary'], reverse=True)
     for i, player in enumerate(players[:20], start=1):
-        print(f"{i}. {player['name']}: ${player['salary']}: Overpaid Metric: {player['overpaid_metric']:.2f}: Worst Stat: {player['worst_stat']}: PER: {player['per']:.2f}")
+        print(f"{i}. {player['name']}: ${player['salary']}: Overpaid Metric: {player['overpaid_metric']:.2f}")
 
     print("\nTop 20 Most Underpaid Players:")
     valid_players = [player for player in players if player['salary'] > 10000000]

@@ -1188,12 +1188,12 @@ from fuzzywuzzy import fuzz
 import csv
 
 # Open the existing basketball data spreadsheet
-with open('normalized_player_stats.csv', 'r') as file:
+with open('merged_normalized_player_stats.csv', 'r') as file:
     reader = csv.reader(file)
     rows = list(reader)
 
 # Open a new CSV file to write the updated data
-with open('updated_basketball_data.csv', 'w', newline='') as file:
+with open('merged_normalized_player_stats.csv', 'w', newline='') as file:
     writer = csv.writer(file)
     
     # Write the header row with the added "SALARY" column

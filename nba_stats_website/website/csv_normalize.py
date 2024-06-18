@@ -8,6 +8,14 @@ def normalize_data(data):
     normalized_data = (data - min_value) / (max_value - min_value)
     return normalized_data
 
+def fix_position(position):
+    valid_positions = ['C', 'PG', 'SG', 'PF', 'SF']
+    if '-' in position:
+        position = position.split('-')[0]
+    if position not in valid_positions:
+        position = 'Unknown'
+    return position
+
 # Read the data from the first CSV file
 with open('player_stats.csv', 'r') as file:
     reader = csv.reader(file)
@@ -47,9 +55,9 @@ for player_name, row1 in data1_dict.items():
 
 # Define the columns to keep
 columns_to_keep = [
-    'PLAYER_ID', 'PLAYER_NAME', 'GP', 'MIN', 'FG_PCT', 'FG3_PCT',
+    'PLAYER_ID', 'PLAYER_NAME', 'Pos', 'Age', 'GP', 'MIN', 'FG_PCT', 'FG3_PCT',
     'FT_PCT', 'OREB', 'DREB', 'AST', 'TOV', 'STL', 'BLK', 'PTS',
-    'PLUS_MINUS', 'WS/48', 'BPM', 'VORP'
+    'PLUS_MINUS', 'WS/48', 'BPM', 'VORP', 'PER'
 ]
 
 # Find the indices of the columns to keep
@@ -58,20 +66,24 @@ indices_to_keep = [headers1.index(col) if col in headers1 else len(headers1) + h
 # Remove unnecessary columns
 filtered_data = [[row[i] for i in indices_to_keep] for row in merged_data.values()]
 
+# Fix the position values
+for row in filtered_data:
+    row[columns_to_keep.index('Pos')] = fix_position(row[columns_to_keep.index('Pos')])
+
 # Convert the data to a NumPy array
 np_data = np.array(filtered_data)
 
-# Convert string values to float (skip the first two columns which are PLAYER_ID and PLAYER_NAME)
-numeric_columns = np_data[:, 2:].astype(float)
+# Convert string values to float (skip the first three columns which are PLAYER_ID, PLAYER_NAME, and Pos)
+numeric_columns = np_data[:, 3:].astype(float)
 
-# Normalize the data (skip the first two columns which are PLAYER_ID and PLAYER_NAME)
+# Normalize the data (skip the first three columns which are PLAYER_ID, PLAYER_NAME, and Pos)
 normalized_numeric_columns = normalize_data(numeric_columns)
 
 # Round the normalized numeric columns to 3 decimal places
 rounded_normalized_numeric_columns = np.round(normalized_numeric_columns, decimals=3)
 
 # Combine the non-numeric columns and rounded normalized numeric columns
-normalized_data = np.column_stack((np_data[:, :2], rounded_normalized_numeric_columns))
+normalized_data = np.column_stack((np_data[:, :3], rounded_normalized_numeric_columns))
 
 # Combine the headers and normalized data
 normalized_data_with_headers = [columns_to_keep] + normalized_data.tolist()
