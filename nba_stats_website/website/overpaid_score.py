@@ -7,61 +7,54 @@ def calculate_age_factor(age):
         return 1.15
     else:
         return 0.85 + (age - 21) * (1.15 - 0.85) / (35 - 21)
+    
+def calculate_gp_weight(games_played):
+    if games_played < 25:
+        return 0.4
+    elif games_played >= 75:
+        return 0.05
+    else:
+        return 0.4 - (games_played - 25) * (0.4 - 0.05) / (75 - 25)
 
 def calculate_overpaid_metric(player_data):
-    gp_norm = player_data['GP']
-    min_norm = player_data['MIN']
-    fg_pct_norm = player_data['FG_PCT']
-    fg3_pct_norm = player_data['FG3_PCT']
-    ft_pct_norm = player_data['FT_PCT']
-    oreb_norm = player_data['OREB']
-    dreb_norm = player_data['DREB']
-    ast_norm = player_data['AST']
-    tov_norm = player_data['TOV']
-    stl_norm = player_data['STL']
-    blk_norm = player_data['BLK']
-    pts_norm = player_data['PTS']
-    plus_minus_norm = player_data['PLUS_MINUS']
-    ws_48_norm = player_data['WS/48']
-    bpm_norm = player_data['BPM']
-    vorp_norm = player_data['VORP']
-    per_norm = player_data['PER']
-
-    age = player_data['Age']
-    position = player_data['Pos']
-
-    # Adjust weights based on player's position
-    position_weights = {
-        'C': {'BLK': 0.09, 'FG_PCT': 0.05, 'FG3_PCT': 0.03, 'FT_PCT': 0.03, 'OREB': 0.05, 'DREB': 0.03, 'PTS': 0.18},
-        'PG': {'AST': 0.05, 'PTS': 0.24, 'FG_PCT': 0.08, 'FT_PCT': 0.06, 'FG3_PCT': 0.07, 'OREB': 0.02, 'DREB': 0.02},
-        'SG': {'PTS': 0.24, 'AST': 0.04},
-        'SF': {'PTS': 0.22, 'AST': 0.03, 'BLK': 0.03},
-        'PF': {'BLK': 0.05, 'PTS': 0.20, 'AST': 0.02}
+    POSITION_WEIGHTS = {
+        'C': {'BLK': 0.09, 'PTS': 0.18, 'AST': 0.04, 'FG_PCT': 0.04, 'FT_PCT': 0.03, 'FG3_PCT': 0.02, 'OREB': 0.05, 'DREB': 0.05},
+        'PG': {'BLK': 0.01, 'PTS': 0.23, 'AST': 0.06, 'FG_PCT': 0.06, 'FT_PCT': 0.05, 'FG3_PCT': 0.05, 'OREB': 0.02, 'DREB': 0.02},
+        'SG': {'BLK': 0.01, 'PTS': 0.24, 'AST': 0.04, 'FG_PCT': 0.06, 'FT_PCT': 0.05, 'FG3_PCT': 0.05, 'OREB': 0.03, 'DREB': 0.02},
+        'SF': {'BLK': 0.04, 'PTS': 0.21, 'AST': 0.04, 'FG_PCT': 0.05, 'FT_PCT': 0.04, 'FG3_PCT': 0.04, 'OREB': 0.04, 'DREB': 0.04},
+        'PF': {'BLK': 0.05, 'PTS': 0.21, 'AST': 0.04, 'FG_PCT': 0.04, 'FT_PCT': 0.04, 'FG3_PCT': 0.02, 'OREB': 0.05, 'DREB': 0.05}
     }
 
-    position_weight = position_weights.get(position, {})
-    blk_weight = position_weight.get('BLK', 0.03)
-    pts_weight = position_weight.get('PTS', 0.21)
-    ast_weight = position_weight.get('AST', 0.03)
-    fg_pct_weight = position_weight.get('FG_PCT', 0.07)
-    ft_pct_weight = position_weight.get('FT_PCT', 0.05)
-    fg3_pct_weight = position_weight.get('FG3_PCT', 0.05)
-    oreb_weight = position_weight.get('OREB', 0.03)
-    dreb_weight = position_weight.get('DREB', 0.03)
+    DEFAULT_WEIGHTS = {
+        'BLK': 0.03,
+        'PTS': 0.21,
+        'AST': 0.04,
+        'FG_PCT': 0.07,
+        'FT_PCT': 0.04,
+        'FG3_PCT': 0.05,
+        'OREB': 0.03,
+        'DREB': 0.03
+    }
+
+    position = player_data['Pos']
+    position_weights = POSITION_WEIGHTS.get(position, {})
+    weights = {**DEFAULT_WEIGHTS, **position_weights}
+    gp_weight = calculate_gp_weight(player_data['GP'])
 
     value_score = (
-        (0.02 * gp_norm) + (0.05 * min_norm) + (fg_pct_weight * fg_pct_norm) + (fg3_pct_weight * fg3_pct_norm) +
-        (ft_pct_weight * ft_pct_norm) + (oreb_weight * oreb_norm) + (dreb_weight * dreb_norm) + (ast_weight * ast_norm) +
-        (-0.05 * tov_norm) + (0.02 * stl_norm) + (blk_weight * blk_norm) + (pts_weight * pts_norm) +
-        (0.8 * plus_minus_norm) + (0.04 * ws_48_norm) + (0.05 * bpm_norm) + (0.07 * vorp_norm) +
-        (0.20 * per_norm)
+        (gp_weight * player_data['GP']) + (0.05 * player_data['MIN']) +
+        (weights['FG_PCT'] * player_data['FG_PCT']) + (weights['FG3_PCT'] * player_data['FG3_PCT']) +
+        (weights['FT_PCT'] * player_data['FT_PCT']) + (weights['OREB'] * player_data['OREB']) +
+        (weights['DREB'] * player_data['DREB']) + (weights['AST'] * player_data['AST']) +
+        (-0.04 * player_data['TOV']) + (0.02 * player_data['STL']) + (weights['BLK'] * player_data['BLK']) +
+        (weights['PTS'] * player_data['PTS']) + (0.8 * player_data['PLUS_MINUS']) +
+        (0.04 * player_data['WS/48']) + (0.05 * player_data['BPM']) + (0.07 * player_data['VORP']) +
+        (0.20 * player_data['PER'])
     )
 
     salary = player_data['SALARY']
-    age_factor = calculate_age_factor(age)
-    overpaid_metric = salary / (value_score * age_factor) if value_score != 0 else 0
-    overpaid_metric = overpaid_metric / 10000000
-
+    age_factor = calculate_age_factor(player_data['Age'])
+    overpaid_metric = (salary / (value_score * age_factor)) / 10000000 if value_score != 0 else 0
     return overpaid_metric
 
 def main():
