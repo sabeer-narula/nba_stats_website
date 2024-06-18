@@ -2,11 +2,11 @@ import csv
 
 def calculate_age_factor(age):
     if age < 21:
-        return 0.2
+        return 0.85
     elif age > 35:
-        return 5
+        return 1.15
     else:
-        return 0.2 + (age - 21) * (5 - 0.2) / (35 - 21)
+        return 0.85 + (age - 21) * (1.15 - 0.85) / (35 - 21)
 
 def calculate_overpaid_metric(player_data):
     gp_norm = player_data['GP']
@@ -32,21 +32,26 @@ def calculate_overpaid_metric(player_data):
 
     # Adjust weights based on player's position
     position_weights = {
-        'C': {'BLK': 0.04, 'PTS': 0.18},
-        'PG': {'AST': 0.04, 'PTS': 0.24},
+        'C': {'BLK': 0.09, 'FG_PCT': 0.05, 'FG3_PCT': 0.03, 'FT_PCT': 0.03, 'OREB': 0.05, 'DREB': 0.03, 'PTS': 0.18},
+        'PG': {'AST': 0.05, 'PTS': 0.24, 'FG_PCT': 0.08, 'FT_PCT': 0.06, 'FG3_PCT': 0.07, 'OREB': 0.02, 'DREB': 0.02},
         'SG': {'PTS': 0.24, 'AST': 0.04},
         'SF': {'PTS': 0.22, 'AST': 0.03, 'BLK': 0.03},
-        'PF': {'BLK': 0.03, 'PTS': 0.20, 'AST': 0.02}
+        'PF': {'BLK': 0.05, 'PTS': 0.20, 'AST': 0.02}
     }
 
     position_weight = position_weights.get(position, {})
-    blk_weight = position_weight.get('BLK', 0.02)
+    blk_weight = position_weight.get('BLK', 0.03)
     pts_weight = position_weight.get('PTS', 0.21)
-    ast_weight = position_weight.get('AST', 0.02)
+    ast_weight = position_weight.get('AST', 0.03)
+    fg_pct_weight = position_weight.get('FG_PCT', 0.07)
+    ft_pct_weight = position_weight.get('FT_PCT', 0.05)
+    fg3_pct_weight = position_weight.get('FG3_PCT', 0.05)
+    oreb_weight = position_weight.get('OREB', 0.03)
+    dreb_weight = position_weight.get('DREB', 0.03)
 
     value_score = (
-        (0.02 * gp_norm) + (0.05 * min_norm) + (0.07 * fg_pct_norm) + (0.08 * fg3_pct_norm) +
-        (0.05 * ft_pct_norm) + (0.03 * oreb_norm) + (0.02 * dreb_norm) + (ast_weight * ast_norm) +
+        (0.02 * gp_norm) + (0.05 * min_norm) + (fg_pct_weight * fg_pct_norm) + (fg3_pct_weight * fg3_pct_norm) +
+        (ft_pct_weight * ft_pct_norm) + (oreb_weight * oreb_norm) + (dreb_weight * dreb_norm) + (ast_weight * ast_norm) +
         (-0.05 * tov_norm) + (0.02 * stl_norm) + (blk_weight * blk_norm) + (pts_weight * pts_norm) +
         (0.8 * plus_minus_norm) + (0.04 * ws_48_norm) + (0.05 * bpm_norm) + (0.07 * vorp_norm) +
         (0.20 * per_norm)
@@ -54,9 +59,8 @@ def calculate_overpaid_metric(player_data):
 
     salary = player_data['SALARY']
     age_factor = calculate_age_factor(age)
-
     overpaid_metric = salary / (value_score * age_factor) if value_score != 0 else 0
-    overpaid_metric = overpaid_metric / 1000000
+    overpaid_metric = overpaid_metric / 10000000
 
     return overpaid_metric
 

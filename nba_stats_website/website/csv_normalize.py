@@ -74,7 +74,7 @@ for row in filtered_data:
 np_data = np.array(filtered_data)
 
 # Convert string values to float (skip the first three columns which are PLAYER_ID, PLAYER_NAME, and Pos)
-numeric_columns = np_data[:, 3:].astype(float)
+numeric_columns = np_data[:, 4:].astype(float)
 
 # Normalize the data (skip the first three columns which are PLAYER_ID, PLAYER_NAME, and Pos)
 normalized_numeric_columns = normalize_data(numeric_columns)
@@ -83,7 +83,7 @@ normalized_numeric_columns = normalize_data(numeric_columns)
 rounded_normalized_numeric_columns = np.round(normalized_numeric_columns, decimals=3)
 
 # Combine the non-numeric columns and rounded normalized numeric columns
-normalized_data = np.column_stack((np_data[:, :3], rounded_normalized_numeric_columns))
+normalized_data = np.column_stack((np_data[:, :4], rounded_normalized_numeric_columns))
 
 # Combine the headers and normalized data
 normalized_data_with_headers = [columns_to_keep] + normalized_data.tolist()
