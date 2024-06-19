@@ -55,10 +55,21 @@
 
 #     return render(request, 'index.html', {'data': data})
 
-
 from django.shortcuts import render
 from .overpaid_score import get_overpaid_underpaid_data
 
 def home(request):
     data = get_overpaid_underpaid_data()
     return render(request, 'index.html', {'data': data})
+
+def overpaid(request):
+    data = get_overpaid_underpaid_data()
+    return render(request, 'overpaid.html', {'data': data})
+
+def highest(request):
+    data = get_overpaid_underpaid_data()
+    return render(request, 'highest.html', {'data': data})
+
+def underpaid(request):
+    data = get_overpaid_underpaid_data()
+    return render(request, 'underpaid.html', {'data': data})

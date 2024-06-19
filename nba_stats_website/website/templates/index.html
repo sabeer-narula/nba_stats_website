@@ -4,73 +4,30 @@
 <head>
     <title>NBA Overpaid and Underpaid Players</title>
     <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
-    <style>
-        .container {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-gap: 20px;
-        }
-        .category {
-            border: 1px solid #ccc;
-            padding: 10px;
-        }
-        .category h2 {
-            text-align: center;
-        }
-        .category .list {
-            margin-top: 10px;
-        }
-        .chart-container {
-            text-align: center;
-            margin-top: 20px;
-        }
-        .chart-container img {
-            max-width: 100%;
-            height: auto;
-        }
-    </style>
 </head>
 <body>
-    <h1>NBA Overpaid and Underpaid Players</h1>
-    <div class="container">
-        <div class="category">
-            <h2>Top 20 Most Overpaid Players (Salary >= $10 million)</h2>
-            <div class="list">
-                <ul>
-                    {% for player in data.overpaid_players %}
-                        <li>{{ forloop.counter }}. {{ player.name }}: ${{ player.salary }}: Overpaid Metric: {{ player.overpaid_metric|floatformat:2 }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <div class="chart-container">
-                <img src="{% static 'overpaid_chart.png' %}" alt="Overpaid Players Chart">
-            </div>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="{% url 'home' %}">Most Overpaid Players</a></li>
+                <li><a href="{% url 'highest' %}">Highest Paid Players</a></li>
+                <li><a href="{% url 'underpaid' %}">Most Underpaid Players</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <h1>NBA Most Overpaid Players</h1>
+    <div class="category">
+        <h2>Top 20 Most Overpaid Players (Salary >= $10 million)</h2>
+        <div class="list">
+            <ul>
+                {% for player in data.overpaid_players %}
+                    <li>{{ forloop.counter }}. {{ player.name }}: ${{ player.salary }}: Overpaid Metric: {{ player.overpaid_metric|floatformat:2 }}</li>
+                {% endfor %}
+            </ul>
         </div>
-        <div class="category">
-            <h2>Overpaid Metrics for the 20 Highest Paid Players</h2>
-            <div class="list">
-                <ul>
-                    {% for player in data.highest_paid_players %}
-                        <li>{{ forloop.counter }}. {{ player.name }}: ${{ player.salary }}: Overpaid Metric: {{ player.overpaid_metric|floatformat:2 }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <div class="chart-container">
-                <img src="{% static 'highest_paid_chart.png' %}" alt="Highest Paid Players Chart">
-            </div>
-        </div>
-        <div class="category">
-            <h2>Top 20 Most Underpaid Players</h2>
-            <div class="list">
-                <ul>
-                    {% for player in data.underpaid_players %}
-                        <li>{{ forloop.counter }}. {{ player.name }}: ${{ player.salary }}: Underpaid Metric: {{ player.overpaid_metric|floatformat:2 }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <div class="chart-container">
-                <img src="{% static 'underpaid_chart.png' %}" alt="Underpaid Players Chart">
-            </div>
+        <div class="chart-container">
+            <img src="{% static 'overpaid_chart.png' %}" alt="Overpaid Players Chart">
         </div>
     </div>
 </body>

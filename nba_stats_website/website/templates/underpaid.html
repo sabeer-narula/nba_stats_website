@@ -1,0 +1,26 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NBA Most Underpaid Players</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="{% url 'home' %}">Most Overpaid Players</a></li>
+                <li><a href="{% url 'highest' %}">Highest Paid Players</a></li>
+                <li><a href="{% url 'underpaid' %}">Most Underpaid Players</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <h1>NBA Most Underpaid Players</h1>
+    <div class="category">
+        <h2>Top 20 Most Underpaid Players</h2>
+        <div class="list">
+            <ul>
+                {% for player in data.underpaid_players %}
+                    <li>{{ forloop.counter }}. {{ player.name }}: ${{ player.salary }}: Underpaid Metric: {{ player.overpaid_metric|floatformat:2 }}</li>
+                {% endfor %}
