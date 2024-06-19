@@ -21,7 +21,7 @@ def calculate_gp_weight(games_played):
     else:
         return 0.4 - (games_played - 25) * (0.4 - 0.05) / (75 - 25)
 
-def calculate_overpaid_metric(player_data, all_players_data):
+def calculate_overpaid_metric(player_data):
     POSITION_WEIGHTS = {
         'C': {'BLK': 0.10, 'PTS': 0.23, 'AST': 0.04, 'FG_PCT': 0.04, 'FT_PCT': 0.03, 'FG3_PCT': 0.02, 'OREB': 0.05, 'DREB': 0.05},
         'PG': {'BLK': 0.01, 'PTS': 0.28, 'AST': 0.06, 'FG_PCT': 0.06, 'FT_PCT': 0.05, 'FG3_PCT': 0.05, 'OREB': 0.02, 'DREB': 0.02},
@@ -63,18 +63,15 @@ def calculate_overpaid_metric(player_data, all_players_data):
     
     percentiles = {}
     for stat in ['GP', 'FG_PCT', 'TOV', 'PTS', 'PLUS_MINUS', 'PER']:
-        all_values = [float(p[stat]) for p in all_players_data]
-        percentiles[stat] = calculate_percentile(player_data[stat], all_values)
+        percentiles[stat] = player_data[stat]
 
     if position == 'C':
         for stat in ['BLK', 'OREB', 'DREB']:
-            all_values = [float(p[stat]) for p in all_players_data]
-            percentiles[stat] = calculate_percentile(player_data[stat], all_values)
+            percentiles[stat] = player_data[stat]
 
     elif position in ['PG', 'SG']:
         for stat in ['FT_PCT', 'FG3_PCT']:
-            all_values = [float(p[stat]) for p in all_players_data]
-            percentiles[stat] = calculate_percentile(player_data[stat], all_values)
+            percentiles[stat] = player_data[stat]
 
     return overpaid_metric, percentiles
 
@@ -100,7 +97,7 @@ def main():
 
             # Check if the player has a valid salary
             if row['SALARY'] > 0:
-                overpaid_metric, percentiles = calculate_overpaid_metric(row, all_players_data)
+                overpaid_metric, percentiles = calculate_overpaid_metric(row)
                 player_info = {
                     'name': row['PLAYER_NAME'],
                     'salary': row['SALARY'],
