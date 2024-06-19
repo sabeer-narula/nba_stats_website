@@ -1,4 +1,9 @@
 import csv
+from matplotlib import pyplot as plt
+import matplotlib
+import seaborn as sns
+
+matplotlib.use('Agg')
 
 def calculate_age_factor(age):
     if age < 21:
@@ -105,6 +110,46 @@ def main():
 # if __name__ == '__main__':
 #     main()
 
+def generate_overpaid_chart(overpaid_players):
+    names = [player['name'] for player in overpaid_players]
+    overpaid_metrics = [player['overpaid_metric'] for player in overpaid_players]
+
+    plt.figure(figsize=(10, 6))
+    plt.bar(names, overpaid_metrics)
+    plt.xticks(rotation=45, ha='right')
+    plt.xlabel('Player')
+    plt.ylabel('Overpaid Metric')
+    plt.title('Top 20 Most Overpaid Players (Salary >= $10 million)')
+    plt.tight_layout()
+    plt.savefig('/Users/sabeernarula/Downloads/nba_stats_website/nba_stats_website/website/static/overpaid_chart.png')
+    plt.close()
+
+def generate_highest_paid_chart(highest_paid_players):
+    names = [player['name'] for player in highest_paid_players]
+    overpaid_metrics = [player['overpaid_metric'] for player in highest_paid_players]
+
+    plt.figure(figsize=(8, 8))
+    plt.pie(overpaid_metrics, labels=names, autopct='%1.1f%%')
+    plt.title('Overpaid Metrics for the 20 Highest Paid Players')
+    plt.tight_layout()
+    plt.savefig('/Users/sabeernarula/Downloads/nba_stats_website/nba_stats_website/website/static/highest_paid_chart.png')
+    plt.close()
+
+def generate_underpaid_chart(underpaid_players):
+    names = [player['name'] for player in underpaid_players]
+    underpaid_metrics = [player['overpaid_metric'] for player in underpaid_players]
+
+    plt.figure(figsize=(8, 8))
+    sns.set(style='whitegrid')
+    sns.lineplot(x=names, y=underpaid_metrics, marker='o')
+    plt.xticks(rotation=45, ha='right')
+    plt.xlabel('Player')
+    plt.ylabel('Underpaid Metric')
+    plt.title('Top 20 Most Underpaid Players')
+    plt.tight_layout()
+    plt.savefig('/Users/sabeernarula/Downloads/nba_stats_website/nba_stats_website/website/static/underpaid_chart.png')
+    plt.close()
+
 def get_overpaid_underpaid_data():
     players = []
     with open('merged_normalized_player_stats.csv', 'r') as file:
@@ -141,6 +186,10 @@ def get_overpaid_underpaid_data():
     valid_players = [player for player in players if (player['salary'] >= 10000000 and (player['GP']*player['minutes'] > 0.3))]
     valid_players.sort(key=lambda x: x['overpaid_metric'])
     underpaid_players = valid_players[:25]
+
+    generate_overpaid_chart(overpaid_players[:20])
+    generate_highest_paid_chart(highest_paid_players)
+    generate_underpaid_chart(underpaid_players[:20])
 
     return {
         'overpaid_players': overpaid_players[:40],

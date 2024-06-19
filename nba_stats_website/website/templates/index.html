@@ -1,7 +1,9 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
-    <title>NBA Stats</title>
+    <title>NBA Overpaid and Underpaid Players</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
     <style>
         .container {
             display: grid;
@@ -18,12 +20,18 @@
         .category .list {
             margin-top: 10px;
         }
+        .chart-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .chart-container img {
+            max-width: 100%;
+            height: auto;
+        }
     </style>
 </head>
 <body>
-    <header>
-        <h1>NBA Stats</h1>
-    </header>
+    <h1>NBA Overpaid and Underpaid Players</h1>
     <div class="container">
         <div class="category">
             <h2>Top 20 Most Overpaid Players (Salary >= $10 million)</h2>
@@ -33,6 +41,9 @@
                         <li>{{ forloop.counter }}. {{ player.name }}: ${{ player.salary }}: Overpaid Metric: {{ player.overpaid_metric|floatformat:2 }}</li>
                     {% endfor %}
                 </ul>
+            </div>
+            <div class="chart-container">
+                <img src="{% static 'overpaid_chart.png' %}" alt="Overpaid Players Chart">
             </div>
         </div>
         <div class="category">
@@ -44,6 +55,9 @@
                     {% endfor %}
                 </ul>
             </div>
+            <div class="chart-container">
+                <img src="{% static 'highest_paid_chart.png' %}" alt="Highest Paid Players Chart">
+            </div>
         </div>
         <div class="category">
             <h2>Top 20 Most Underpaid Players</h2>
@@ -53,6 +67,9 @@
                         <li>{{ forloop.counter }}. {{ player.name }}: ${{ player.salary }}: Underpaid Metric: {{ player.overpaid_metric|floatformat:2 }}</li>
                     {% endfor %}
                 </ul>
+            </div>
+            <div class="chart-container">
+                <img src="{% static 'underpaid_chart.png' %}" alt="Underpaid Players Chart">
             </div>
         </div>
     </div>
