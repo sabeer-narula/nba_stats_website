@@ -82,7 +82,7 @@ def calculate_percentile(value, data):
 
 def main():
     # Read the CSV file
-    with open('../data/merged_normalized_player_stats.csv', 'r') as file:
+    with open('/Users/sabeernarula/Desktop/NBA-Stats/NBA-Stats/src/backend/data/merged_normalized_player_stats.csv', 'r') as file:
         csv_reader = csv.DictReader(file)
         all_players_data = list(csv_reader)
         players = []
@@ -177,7 +177,7 @@ if __name__ == '__main__':
 
 def get_overpaid_underpaid_data():
     players = []
-    with open('../data/merged_normalized_player_stats.csv', 'r') as file:
+    with open('/Users/sabeernarula/Desktop/NBA-Stats/NBA-Stats/src/backend/data/merged_normalized_player_stats.csv', 'r') as file:
         csv_reader = csv.DictReader(file)
         for row in csv_reader:
             # Convert numeric values to floats, skipping empty strings

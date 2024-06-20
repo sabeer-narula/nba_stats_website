@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Route, Link, Routes } from 'react-router-dom';
 import OverpaidPlayers from './OverpaidPlayers';
 import HighestPaidPlayers from './HighestPaidPlayers';
