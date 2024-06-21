@@ -94,7 +94,6 @@
 #     writer.writerows(normalized_data_with_headers)
 
 # print("Merged and normalized data saved to 'merged_normalized_player_stats.csv'")
-
 import csv
 import numpy as np
 from fuzzywuzzy import fuzz
@@ -106,6 +105,14 @@ def min_max_scale(data):
 
 def scale_percentage(data, low_threshold, high_threshold):
     return np.clip(data, low_threshold, high_threshold)
+
+def robust_normalize(data, lower_percentile=1, upper_percentile=99):
+    lower, upper = np.percentile(data, [lower_percentile, upper_percentile])
+    clipped_data = np.clip(data, lower, upper)
+    mean = np.mean(clipped_data)
+    std = np.std(clipped_data)
+    normalized = (clipped_data - mean) / std
+    return np.clip(normalized, -3, 3)  # Clip to [-3, 3] range
 
 def fix_position(position):
     valid_positions = ['C', 'PG', 'SG', 'PF', 'SF']
@@ -176,12 +183,14 @@ np_data = np.array(filtered_data)
 numeric_columns = np_data[:, 4:].astype(float)
 
 # Define column groups for different preprocessing methods
-regular_columns = ['Age', 'GP', 'MIN', 'OREB', 'DREB', 'AST', 'TOV', 'STL', 'BLK', 'PTS', 'PLUS_MINUS', 'WS/48', 'BPM', 'VORP', 'PER']
+regular_columns = ['Age', 'GP', 'MIN', 'OREB', 'DREB', 'AST', 'TOV', 'STL', 'BLK', 'PTS', 'PLUS_MINUS', 'WS/48', 'BPM', 'PER']
 percentage_columns = ['FG_PCT', 'FG3_PCT', 'FT_PCT']
+vorp_column = ['VORP']
 
 # Get indices for each column group
 regular_indices = [columns_to_keep.index(col) - 4 for col in regular_columns]  # -4 to account for non-numeric columns
 percentage_indices = [columns_to_keep.index(col) - 4 for col in percentage_columns]
+vorp_index = columns_to_keep.index('VORP') - 4
 
 # Apply preprocessing
 preprocessed_numeric_columns = np.zeros_like(numeric_columns)
@@ -193,6 +202,9 @@ fg3_pct = scale_percentage(numeric_columns[:, percentage_indices[1]], 0.20, 0.55
 ft_pct = scale_percentage(numeric_columns[:, percentage_indices[2]], 0.5, 0.9)
 
 preprocessed_numeric_columns[:, percentage_indices] = np.column_stack((fg_pct, fg3_pct, ft_pct))
+
+# Apply robust normalization to VORP
+preprocessed_numeric_columns[:, vorp_index] = robust_normalize(numeric_columns[:, vorp_index])
 
 # Round the preprocessed numeric columns to 3 decimal places
 rounded_preprocessed_numeric_columns = np.round(preprocessed_numeric_columns, decimals=3)

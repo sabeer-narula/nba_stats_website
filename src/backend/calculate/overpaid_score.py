@@ -21,7 +21,29 @@ def calculate_gp_weight(games_played):
     else:
         return 0.4 - (games_played - 25) * (0.4 - 0.05) / (75 - 25)
 
-def calculate_overpaid_metric(player_data):
+def load_original_stats():
+    per_stats = {}
+    player_stats = {}
+    
+    with open('/Users/sabeernarula/Desktop/NBA-Stats/NBA-Stats/src/backend/data/per.csv', 'r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            per_stats[row['Player']] = row
+    
+    with open('/Users/sabeernarula/Desktop/NBA-Stats/NBA-Stats/src/backend/data/player_stats.csv', 'r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            player_stats[row['PLAYER_NAME']] = row
+    
+    return per_stats, player_stats
+
+def get_original_stat(player_name, stat, per_stats, player_stats):
+    if stat in ['PER', 'VORP']:
+        return float(per_stats.get(player_name, {}).get(stat, 0))
+    else:
+        return float(player_stats.get(player_name, {}).get(stat, 0))
+
+def calculate_overpaid_metric(player_data, per_stats, player_stats):
     POSITION_WEIGHTS = {
         'C': {'BLK': 0.10, 'PTS': 0.23, 'AST': 0.04, 'FG_PCT': 0.04, 'FT_PCT': 0.03, 'FG3_PCT': 0.02, 'OREB': 0.05, 'DREB': 0.05},
         'PG': {'BLK': 0.01, 'PTS': 0.28, 'AST': 0.06, 'FG_PCT': 0.06, 'FT_PCT': 0.05, 'FG3_PCT': 0.05, 'OREB': 0.02, 'DREB': 0.02},
@@ -31,14 +53,7 @@ def calculate_overpaid_metric(player_data):
     }
 
     DEFAULT_WEIGHTS = {
-        'BLK': 0.03,
-        'PTS': 0.25,
-        'AST': 0.04,
-        'FG_PCT': 0.07,
-        'FT_PCT': 0.04,
-        'FG3_PCT': 0.05,
-        'OREB': 0.03,
-        'DREB': 0.03
+        'BLK': 0.03, 'PTS': 0.25, 'AST': 0.04, 'FG_PCT': 0.07, 'FT_PCT': 0.04, 'FG3_PCT': 0.05, 'OREB': 0.03, 'DREB': 0.03
     }
 
     position = player_data['Pos']
@@ -62,42 +77,43 @@ def calculate_overpaid_metric(player_data):
     overpaid_metric = (salary / (value_score * age_factor)) / 10000000 if value_score != 0 else 0
     
     percentiles = {}
-    for stat in ['GP', 'FG_PCT', 'TOV', 'PTS', 'PLUS_MINUS', 'PER']:
-        percentiles[stat] = player_data[stat]
+    stats_to_check = ['GP', 'FG_PCT', 'TOV', 'PTS', 'PLUS_MINUS', 'PER']
+    
+    if position in ['C', 'PF']:
+        stats_to_check.extend(['BLK', 'OREB', 'DREB'])
+    
+    if position in ['PG', 'SG']:
+        stats_to_check.extend(['AST', 'FT_PCT', 'FG3_PCT'])
 
-    if position == 'C':
-        for stat in ['BLK', 'OREB', 'DREB']:
-            percentiles[stat] = player_data[stat]
-
-    elif position in ['PG', 'SG']:
-        for stat in ['FT_PCT', 'FG3_PCT']:
-            percentiles[stat] = player_data[stat]
+    for stat in stats_to_check:
+        normalized_value = player_data[stat]
+        original_value = get_original_stat(player_data['PLAYER_NAME'], stat, per_stats, player_stats)
+        
+        if stat == 'FG3_PCT' and normalized_value > 0.30:
+            continue
+        if stat == 'FG_PCT' and normalized_value > 0.40:
+            continue
+        if stat == 'FT_PCT' and normalized_value > 0.65:
+            continue
+        
+        percentiles[stat] = (normalized_value, original_value)
 
     return overpaid_metric, percentiles
 
-def calculate_percentile(value, data):
-    count = sum(1 for v in data if v <= value)
-    percentile = count / len(data)
-    return percentile
-
 def main():
-    # Read the CSV file
+    per_stats, player_stats = load_original_stats()
+    
     with open('/Users/sabeernarula/Desktop/NBA-Stats/NBA-Stats/src/backend/data/merged_normalized_player_stats.csv', 'r') as file:
         csv_reader = csv.DictReader(file)
         all_players_data = list(csv_reader)
         players = []
         for row in all_players_data:
-            # Convert numeric values to floats, skipping empty strings
             for key in row:
                 if key not in ['PLAYER_NAME', 'PLAYER_ID', 'Pos']:
-                    if row[key] != '':
-                        row[key] = float(row[key])
-                    else:
-                        row[key] = 0.0
+                    row[key] = float(row[key]) if row[key] != '' else 0.0
 
-            # Check if the player has a valid salary
             if row['SALARY'] > 0:
-                overpaid_metric, percentiles = calculate_overpaid_metric(row)
+                overpaid_metric, percentiles = calculate_overpaid_metric(row, per_stats, player_stats)
                 player_info = {
                     'name': row['PLAYER_NAME'],
                     'salary': row['SALARY'],
@@ -108,74 +124,33 @@ def main():
                 }
                 players.append(player_info)
 
-    # Filter players with salary under $10 million for the most overpaid list
     overpaid_players = [player for player in players if player['salary'] >= 10000000]
     overpaid_players.sort(key=lambda x: x['overpaid_metric'], reverse=True)
     print("Top 20 Most Overpaid Players (Salary >= $10 million):")
     for i, player in enumerate(overpaid_players[:20], start=1):
-        worst_percentiles = sorted(player['percentiles'].items(), key=lambda x: x[1])[:3]
-        worst_stats = [f"{stat}: {percentile:.2f}" for stat, percentile in worst_percentiles]
-        print(f"{i}. {player['name']}: ${player['salary']}: Overpaid Metric: {player['overpaid_metric']:.2f}. Worst percentiles: {', '.join(worst_stats)}")
+        worst_percentiles = sorted(player['percentiles'].items(), key=lambda x: x[1][0])[:3]
+        worst_stats = [f"{stat}: {original_value:.1f}" for stat, (_, original_value) in worst_percentiles]
+        print(f"{i}. {player['name']}: ${player['salary']}: Overpaid Metric: {player['overpaid_metric']:.2f}. Worst stats: {', '.join(worst_stats)}")
 
     print("\nOverpaid Metrics for the 20 Highest Paid Players:")
     players.sort(key=lambda x: x['salary'], reverse=True)
     for i, player in enumerate(players[:20], start=1):
-        worst_percentiles = sorted(player['percentiles'].items(), key=lambda x: x[1])[:3]
-        worst_stats = [f"{stat}: {percentile:.2f}" for stat, percentile in worst_percentiles]
-        print(f"{i}. {player['name']}: ${player['salary']}: Overpaid Metric: {player['overpaid_metric']:.2f}. Worst percentiles: {', '.join(worst_stats)}")
+        worst_percentiles = sorted(player['percentiles'].items(), key=lambda x: x[1][0])[:3]
+        worst_stats = [f"{stat}: {original_value:.1f}" for stat, (_, original_value) in worst_percentiles]
+        print(f"{i}. {player['name']}: ${player['salary']}: Overpaid Metric: {player['overpaid_metric']:.2f}. Worst stats: {', '.join(worst_stats)}")
 
     print("\nTop 20 Most Underpaid Players:")
     valid_players = [player for player in players if (player['salary'] >= 10000000 and (player['GP']*player['minutes'] > 0.3))]
     valid_players.sort(key=lambda x: x['overpaid_metric'])
     for i, player in enumerate(valid_players[:20], start=1):
-        best_percentiles = sorted(player['percentiles'].items(), key=lambda x: x[1], reverse=True)[:3]
-        best_stats = [f"{stat}: {percentile:.2f}" for stat, percentile in best_percentiles]
-        print(f"{i}. {player['name']}: ${player['salary']}: Underpaid Metric: {player['overpaid_metric']:.2f}. Best percentiles: {', '.join(best_stats)}")
+        best_percentiles = sorted(player['percentiles'].items(), key=lambda x: x[1][0], reverse=True)[:3]
+        best_stats = [f"{stat}: {original_value:.1f}" for stat, (_, original_value) in best_percentiles]
+        print(f"{i}. {player['name']}: ${player['salary']}: Underpaid Metric: {player['overpaid_metric']:.2f}. Best stats: {', '.join(best_stats)}")
 
 if __name__ == '__main__':
     main()
-
-# def generate_overpaid_chart(overpaid_players):
-#     names = [player['name'] for player in overpaid_players]
-#     overpaid_metrics = [player['overpaid_metric'] for player in overpaid_players]
-
-#     plt.figure(figsize=(10, 6))
-#     plt.bar(names, overpaid_metrics)
-#     plt.xticks(rotation=45, ha='right')
-#     plt.xlabel('Player')
-#     plt.ylabel('Overpaid Metric')
-#     plt.title('Top 20 Most Overpaid Players (Salary >= $10 million)')
-#     plt.tight_layout()
-#     plt.savefig('/Users/sabeernarula/Downloads/nba_stats_website/nba_stats_website/website/static/overpaid_chart.png')
-#     plt.close()
-
-# def generate_highest_paid_chart(highest_paid_players):
-#     names = [player['name'] for player in highest_paid_players]
-#     overpaid_metrics = [player['overpaid_metric'] for player in highest_paid_players]
-
-#     plt.figure(figsize=(8, 8))
-#     plt.pie(overpaid_metrics, labels=names, autopct='%1.1f%%')
-#     plt.title('Overpaid Metrics for the 20 Highest Paid Players')
-#     plt.tight_layout()
-#     plt.savefig('/Users/sabeernarula/Downloads/nba_stats_website/nba_stats_website/website/static/highest_paid_chart.png')
-#     plt.close()
-
-# def generate_underpaid_chart(underpaid_players):
-#     names = [player['name'] for player in underpaid_players]
-#     underpaid_metrics = [player['overpaid_metric'] for player in underpaid_players]
-
-#     plt.figure(figsize=(8, 8))
-#     sns.set(style='whitegrid')
-#     sns.lineplot(x=names, y=underpaid_metrics, marker='o')
-#     plt.xticks(rotation=45, ha='right')
-#     plt.xlabel('Player')
-#     plt.ylabel('Underpaid Metric')
-#     plt.title('Top 20 Most Underpaid Players')
-#     plt.tight_layout()
-#     plt.savefig('/Users/sabeernarula/Downloads/nba_stats_website/nba_stats_website/website/static/underpaid_chart.png')
-#     plt.close()
-
 def get_overpaid_underpaid_data():
+    per_stats, player_stats = load_original_stats()
     players = []
     with open('/Users/sabeernarula/Desktop/NBA-Stats/NBA-Stats/src/backend/data/merged_normalized_player_stats.csv', 'r') as file:
         csv_reader = csv.DictReader(file)
@@ -190,13 +165,24 @@ def get_overpaid_underpaid_data():
 
             # Check if the player has a valid salary
             if row['SALARY'] > 0:
-                overpaid_metric, _ = calculate_overpaid_metric(row)
+                overpaid_metric, percentiles = calculate_overpaid_metric(row, per_stats, player_stats)
+                
+                # Get worst stats
+                worst_stats = sorted(percentiles.items(), key=lambda x: x[1][0])[:5]
+                worst_stats = [stat for stat, (norm_val, orig_val) in worst_stats 
+                               if stat != 'PLUS_MINUS' or orig_val < 0][:3]
+                
+                # Get best stats
+                best_stats = sorted(percentiles.items(), key=lambda x: x[1][0], reverse=True)[:5]
+                best_stats = [stat for stat, (norm_val, orig_val) in best_stats 
+                               if stat != 'TOV' and (stat != 'PLUS_MINUS' or orig_val > 1)][:3]
+                
                 player_info = {
                     'name': row['PLAYER_NAME'],
                     'salary': row['SALARY'],
-                    'GP': row['GP'],
-                    'minutes': row['MIN'],
-                    'overpaid_metric': overpaid_metric
+                    'overpaid_metric': overpaid_metric,
+                    'worst_stats': {stat: percentiles[stat][1] for stat in worst_stats},
+                    'best_stats': {stat: percentiles[stat][1] for stat in best_stats}
                 }
                 players.append(player_info)
 
@@ -208,13 +194,9 @@ def get_overpaid_underpaid_data():
     highest_paid_players = sorted(players, key=lambda x: x['salary'], reverse=True)[:20]
 
     # Get the top 20 most underpaid players
-    valid_players = [player for player in players if (player['salary'] >= 10000000 and (player['GP']*player['minutes'] > 0.3))]
+    valid_players = [player for player in players if player['salary'] >= 10000000]
     valid_players.sort(key=lambda x: x['overpaid_metric'])
     underpaid_players = valid_players[:25]
-
-    # generate_overpaid_chart(overpaid_players[:20])
-    # generate_highest_paid_chart(highest_paid_players)
-    # generate_underpaid_chart(underpaid_players[:20])
 
     return {
         'overpaid_players': overpaid_players[:40],

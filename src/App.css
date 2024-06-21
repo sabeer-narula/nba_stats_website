@@ -1,22 +1,3 @@
-.player-list-container {
-  position: relative;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-li {
-  margin: 10px 0;
-  padding: 10px;
-  background-color: #a91616;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
 .modal {
   position: absolute;
   background-color: rgb(33, 59, 178);
@@ -26,12 +7,23 @@ li {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   z-index: 1000;
   min-width: 200px;
+  max-width: 300px;
+  overflow-y: auto;
+  max-height: 80vh;
 }
 
-.modal h3 {
-  margin-top: 0;
+.modal h3, .modal h4 {
+  margin-top: 10px;
+  margin-bottom: 5px;
 }
 
-.modal p {
+.modal ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.modal li {
   margin: 5px 0;
+  background-color: transparent;
+  padding: 0;
 }

@@ -2,5 +2,6 @@ export interface Player {
   name: string;
   salary: number;
   overpaid_metric: number;
-  [key: string]: string | number; // This allows for additional dynamic properties
+  best_stats: { [key: string]: number };
+  worst_stats: { [key: string]: number };
 }

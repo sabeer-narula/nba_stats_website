@@ -7,17 +7,25 @@ interface PlayerModalProps {
 }
 
 const PlayerModal: React.FC<PlayerModalProps> = ({ player, position }) => {
-  const stats = Object.entries(player).filter(([key, _]) => 
-    !['name', 'salary', 'overpaid_metric'].includes(key)
-  );
-
   return (
     <div className="modal" style={{ top: `${position.top}px`, left: `${position.left}px` }}>
       <h3>{player.name}</h3>
       <p>Salary: ${player.salary.toLocaleString()}</p>
-      {stats.map(([key, value]) => (
-        <p key={key}>{key}: {typeof value === 'number' ? value.toFixed(3) : value}</p>
-      ))}
+      <p>Overpaid Metric: {player.overpaid_metric.toFixed(2)}</p>
+      
+      <h4>Best Stats:</h4>
+      <ul>
+        {Object.entries(player.best_stats).map(([stat, value]) => (
+          <li key={stat}>{stat}: {typeof value === 'number' ? value.toFixed(1) : value}</li>
+        ))}
+      </ul>
+      
+      <h4>Worst Stats:</h4>
+      <ul>
+        {Object.entries(player.worst_stats).map(([stat, value]) => (
+          <li key={stat}>{stat}: {typeof value === 'number' ? value.toFixed(1) : value}</li>
+        ))}
+      </ul>
     </div>
   );
 };
