@@ -25,14 +25,12 @@ const OverpaidPlayers: React.FC = () => {
     const listItem = event.currentTarget;
     const listRect = listRef.current?.getBoundingClientRect();
     const itemRect = listItem.getBoundingClientRect();
-
     if (listRect) {
       setModalPosition({
         top: itemRect.top - listRect.top,
         left: itemRect.right - listRect.left + 10, // 10px offset from the list item
       });
     }
-
     setSelectedPlayer(player);
   };
 
