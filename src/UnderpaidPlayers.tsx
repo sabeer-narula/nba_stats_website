@@ -25,28 +25,27 @@ const UnderpaidPlayers: React.FC = () => {
     const listItem = event.currentTarget;
     const listRect = listRef.current?.getBoundingClientRect();
     const itemRect = listItem.getBoundingClientRect();
-
     if (listRect) {
       setModalPosition({
         top: itemRect.top - listRect.top,
-        left: itemRect.right - listRect.left + 10, // 10px offset from the list item
+        left: itemRect.right - listRect.left + 10,
       });
     }
-
     setSelectedPlayer(player);
   };
 
   return (
-    <div className="player-list-container">
-      <h2>Most Underpaid Players</h2>
-      <ul ref={listRef}>
+    <div className="bg-white rounded-lg shadow-md p-6">
+      <h2 className="text-2xl font-semibold mb-4">Most Underpaid Players</h2>
+      <ul ref={listRef} className="space-y-2">
         {underpaidPlayers.map((player, index) => (
           <li
             key={index}
+            className="p-3 bg-gray-100 rounded hover:bg-gray-200 transition-colors duration-200 cursor-pointer"
             onMouseEnter={(e) => handleMouseEnter(player, e)}
             onMouseLeave={() => setSelectedPlayer(null)}
           >
-            {player.name}: ${player.salary.toLocaleString()} - Underpaid Metric: {player.overpaid_metric.toFixed(2)}
+            <span className="font-medium">{player.name}</span>: ${player.salary.toLocaleString()} - Underpaid Metric: {player.overpaid_metric.toFixed(2)}
           </li>
         ))}
       </ul>
