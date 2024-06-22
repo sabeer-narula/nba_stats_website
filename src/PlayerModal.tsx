@@ -4,9 +4,10 @@ import { Player } from './types';
 interface PlayerModalProps {
   player: Player;
   position: { top: number; left: number };
+  isUnderpaid: boolean;
 }
 
-const PlayerModal: React.FC<PlayerModalProps> = ({ player, position }) => {
+const PlayerModal: React.FC<PlayerModalProps> = ({ player, position, isUnderpaid }) => {
   const getSpecificPlayerMessage = (player: Player): string | null => {
     const specificMessages: { [key: string]: string } = {
       "Klay Thompson": `gets paid $${player.salary.toLocaleString()} to go 0/10 in an elimination game`,
@@ -16,6 +17,7 @@ const PlayerModal: React.FC<PlayerModalProps> = ({ player, position }) => {
       "LeBron James": `gets paid $${player.salary.toLocaleString()} to practice nepotism`,
       "Zion Williamson": `gets paid $${player.salary.toLocaleString()} to start a food blogging channel`,
       "Ja Morant": `gets paid $${player.salary.toLocaleString()} to practice his sharpshooting on the sidelines`,
+      "Chet Holmgren": `gets paid $${player.salary.toLocaleString()} to be ♫ what a pro wants and what a pro needs ♫`,
     };
 
     return specificMessages[player.name] || null;
@@ -58,22 +60,26 @@ const PlayerModal: React.FC<PlayerModalProps> = ({ player, position }) => {
     );
   }
 
-  const worstStatsArray = Object.entries(player.worst_stats)
-    .map(([stat, value]) => getStatDescription(stat, value));
+  const statsArray = isUnderpaid
+    ? Object.entries(player.best_stats).map(([stat, value]) => getStatDescription(stat, value))
+    : Object.entries(player.worst_stats).map(([stat, value]) => getStatDescription(stat, value));
 
-  const worstStatsDescription = worstStatsArray.length > 1
-    ? worstStatsArray.slice(0, -1).join(', ') + ', and ' + worstStatsArray.slice(-1)
-    : worstStatsArray[0];
+  const statsDescription = statsArray.length > 1
+    ? statsArray.slice(0, -1).join(', ') + ', and ' + statsArray.slice(-1)
+    : statsArray[0];
+
+  const message = isUnderpaid
+    ? `is putting up ${statsDescription} for only $${player.salary.toLocaleString()}`
+    : `gets paid $${player.salary.toLocaleString()} to ${statsDescription}`;
 
   return (
     <div className="absolute bg-blue-600 text-white p-4 rounded-lg shadow-lg z-50 max-w-xs" style={{ top: `${position.top}px`, left: `${position.left}px` }}>
-      <p className="text-sm">{player.name} gets paid ${player.salary.toLocaleString()} to {worstStatsDescription}.</p>
+      <p className="text-sm">{player.name} {message}.</p>
     </div>
   );
 };
 
 export default PlayerModal;
-
 
 
 

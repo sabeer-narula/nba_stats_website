@@ -49,7 +49,7 @@ const OverpaidPlayers: React.FC = () => {
           </li>
         ))}
       </ul>
-      {selectedPlayer && <PlayerModal player={selectedPlayer} position={modalPosition} />}
+      {selectedPlayer && <PlayerModal player={selectedPlayer} position={modalPosition} isUnderpaid={false} />}
     </div>
   );
 };
