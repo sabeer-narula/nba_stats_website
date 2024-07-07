@@ -1,42 +1,88 @@
-import { BrowserRouter as Router, Route, Link, Routes } from 'react-router-dom';
-import OverpaidPlayers from './OverpaidPlayers';
-import HighestPaidPlayers from './HighestPaidPlayers';
-import UnderpaidPlayers from './UnderpaidPlayers';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Player } from './types';
+import PlayerList from './PlayerList';
 
 function App() {
+  const [overpaidPlayers, setOverpaidPlayers] = useState<Player[]>([]);
+  const [highestPaidPlayers, setHighestPaidPlayers] = useState<Player[]>([]);
+  const [underpaidPlayers, setUnderpaidPlayers] = useState<Player[]>([]);
+  const [activeView, setActiveView] = useState<'overpaid' | 'highestPaid' | 'underpaid'>('overpaid');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const [overpaidResponse, highestPaidResponse, underpaidResponse] = await Promise.all([
+          axios.get('http://127.0.0.1:5000/api/overpaid-players'),
+          axios.get('http://127.0.0.1:5000/api/highest-paid-players'),
+          axios.get('http://127.0.0.1:5000/api/underpaid-players')
+        ]);
+
+        setOverpaidPlayers(overpaidResponse.data);
+        setHighestPaidPlayers(highestPaidResponse.data);
+        setUnderpaidPlayers(underpaidResponse.data);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setError('Failed to fetch player data. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (isLoading) {
+    return <div className="text-center mt-8">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center mt-8 text-red-600">{error}</div>;
+  }
+
   return (
-    <Router>
-      <div className="min-h-screen bg-gray-100 text-gray-900">
-        <header className="bg-blue-600 text-white shadow-lg">
-          <div className="container mx-auto py-4 px-6">
-            <h1 className="text-3xl font-bold">NBA Player Statistics</h1>
-          </div>
-        </header>
-        <nav className="bg-white shadow-md">
-          <div className="container mx-auto px-6">
-            <ul className="flex space-x-4 py-4">
-              <li>
-                <Link to="/overpaid" className="text-blue-600 hover:text-blue-800 font-medium">Most Overpaid Players</Link>
-              </li>
-              <li>
-                <Link to="/highest-paid" className="text-blue-600 hover:text-blue-800 font-medium">Highest Paid Players</Link>
-              </li>
-              <li>
-                <Link to="/underpaid" className="text-blue-600 hover:text-blue-800 font-medium">Most Underpaid Players</Link>
-              </li>
-            </ul>
-          </div>
-        </nav>
-        <main className="container mx-auto mt-8 px-6">
-          <Routes>
-            <Route path="/overpaid" element={<OverpaidPlayers />} />
-            <Route path="/highest-paid" element={<HighestPaidPlayers />} />
-            <Route path="/underpaid" element={<UnderpaidPlayers />} />
-            <Route path="/" element={<h2 className="text-2xl font-semibold">Welcome to NBA Player Statistics</h2>} />
-          </Routes>
-        </main>
-      </div>
-    </Router>
+    <div className="min-h-screen bg-gray-100 text-gray-900">
+      <header className="bg-blue-600 text-white shadow-lg">
+        <div className="container mx-auto py-4 px-6">
+          <h1 className="text-3xl font-bold">NBA Player Statistics</h1>
+        </div>
+      </header>
+      <main className="container mx-auto mt-8 px-6">
+        <div className="mb-6">
+          <button
+            className={`mr-4 px-4 py-2 rounded ${activeView === 'overpaid' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+            onClick={() => setActiveView('overpaid')}
+          >
+            Overpaid Players
+          </button>
+          <button
+            className={`mr-4 px-4 py-2 rounded ${activeView === 'highestPaid' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+            onClick={() => setActiveView('highestPaid')}
+          >
+            Highest Paid Players
+          </button>
+          <button
+            className={`px-4 py-2 rounded ${activeView === 'underpaid' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+            onClick={() => setActiveView('underpaid')}
+          >
+            Underpaid Players
+          </button>
+        </div>
+        {activeView === 'overpaid' && (
+          <PlayerList players={overpaidPlayers} title="Top 100 Most Overpaid Players" isUnderpaid={false} />
+        )}
+        {activeView === 'highestPaid' && (
+          <PlayerList players={highestPaidPlayers} title="Highest Paid Players" isUnderpaid={false} />
+        )}
+        {activeView === 'underpaid' && (
+          <PlayerList players={underpaidPlayers} title="Top 100 Most Underpaid Players" isUnderpaid={true} />
+        )}
+      </main>
+    </div>
   );
 }
 

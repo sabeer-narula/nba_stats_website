@@ -77,7 +77,7 @@ def calculate_overpaid_metric(player_data, per_stats, player_stats):
     overpaid_metric = (salary / (value_score * age_factor)) / 10000000 if value_score != 0 else 0
     
     percentiles = {}
-    stats_to_check = ['GP', 'FG_PCT', 'TOV', 'PTS', 'PLUS_MINUS', 'PER']
+    stats_to_check = ['GP', 'FG_PCT', 'TOV', 'PTS', 'PLUS_MINUS']
     
     if position in ['C', 'PF']:
         stats_to_check.extend(['BLK', 'OREB', 'DREB'])
@@ -89,13 +89,20 @@ def calculate_overpaid_metric(player_data, per_stats, player_stats):
         normalized_value = player_data[stat]
         original_value = get_original_stat(player_data['PLAYER_NAME'], stat, per_stats, player_stats)
         
-        if stat == 'FG3_PCT' and normalized_value > 0.30:
+        if stat == 'FG3_PCT' and normalized_value > 0.32:
             continue
-        if stat == 'FG_PCT' and normalized_value > 0.40:
+        if stat == 'FG_PCT' and normalized_value > 0.42:
             continue
-        if stat == 'FT_PCT' and normalized_value > 0.65:
+        if stat == 'FT_PCT' and normalized_value > 0.70:
             continue
-        
+        if stat == 'PTS' and original_value > 20:
+            continue
+        if stat == 'TOV' and original_value < 1:
+            continue
+        if stat == 'AST' and original_value > 5:
+            continue
+        if stat == 'GP' and original_value > 65:
+            continue
         percentiles[stat] = (normalized_value, original_value)
 
     return overpaid_metric, percentiles
@@ -127,7 +134,7 @@ def main():
     overpaid_players = [player for player in players if player['salary'] >= 10000000]
     overpaid_players.sort(key=lambda x: x['overpaid_metric'], reverse=True)
     print("Top 20 Most Overpaid Players (Salary >= $10 million):")
-    for i, player in enumerate(overpaid_players[:20], start=1):
+    for i, player in enumerate(overpaid_players[:100], start=1):
         worst_percentiles = sorted(player['percentiles'].items(), key=lambda x: x[1][0])[:3]
         worst_stats = [f"{stat}: {original_value:.1f}" for stat, (_, original_value) in worst_percentiles]
         print(f"{i}. {player['name']}: ${player['salary']}: Overpaid Metric: {player['overpaid_metric']:.2f}. Worst stats: {', '.join(worst_stats)}")
@@ -142,13 +149,14 @@ def main():
     print("\nTop 20 Most Underpaid Players:")
     valid_players = [player for player in players if (player['salary'] >= 10000000 and (player['GP']*player['minutes'] > 0.3))]
     valid_players.sort(key=lambda x: x['overpaid_metric'])
-    for i, player in enumerate(valid_players[:20], start=1):
+    for i, player in enumerate(valid_players[:100], start=1):
         best_percentiles = sorted(player['percentiles'].items(), key=lambda x: x[1][0], reverse=True)[:3]
         best_stats = [f"{stat}: {original_value:.1f}" for stat, (_, original_value) in best_percentiles]
         print(f"{i}. {player['name']}: ${player['salary']}: Underpaid Metric: {player['overpaid_metric']:.2f}. Best stats: {', '.join(best_stats)}")
 
 if __name__ == '__main__':
     main()
+
 def get_overpaid_underpaid_data():
     per_stats, player_stats = load_original_stats()
     players = []
@@ -189,17 +197,18 @@ def get_overpaid_underpaid_data():
     # Filter players with salary under $10 million for the most overpaid list
     overpaid_players = [player for player in players if player['salary'] >= 10000000]
     overpaid_players.sort(key=lambda x: x['overpaid_metric'], reverse=True)
+    overpaid_players = overpaid_players[:100]  # Slice after sorting
 
     # Get the 20 highest paid players
     highest_paid_players = sorted(players, key=lambda x: x['salary'], reverse=True)[:20]
 
-    # Get the top 20 most underpaid players
+    # Get the top 100 most underpaid players
     valid_players = [player for player in players if player['salary'] >= 10000000]
     valid_players.sort(key=lambda x: x['overpaid_metric'])
-    underpaid_players = valid_players[:25]
+    underpaid_players = valid_players[:100]
 
     return {
-        'overpaid_players': overpaid_players[:40],
+        'overpaid_players': overpaid_players,
         'highest_paid_players': highest_paid_players,
         'underpaid_players': underpaid_players
     }
