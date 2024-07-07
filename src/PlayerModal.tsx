@@ -54,7 +54,7 @@ const PlayerModal: React.FC<PlayerModalProps> = ({ player, position, isUnderpaid
 
   if (specificMessage) {
     return (
-      <div className="absolute bg-blue-600 text-white p-4 rounded-lg shadow-lg z-50 max-w-xs" style={{ top: `${position.top}px`, left: `${position.left}px` }}>
+      <div className="fixed bg-blue-600 text-white p-4 rounded-lg shadow-lg z-50 max-w-xs" style={{ top: `${position.top}px`, left: `${position.left}px` }}>
         <p className="text-sm">{player.name} {specificMessage}.</p>
       </div>
     );
@@ -73,30 +73,10 @@ const PlayerModal: React.FC<PlayerModalProps> = ({ player, position, isUnderpaid
     : `gets paid $${player.salary.toLocaleString()} to ${statsDescription}`;
 
   return (
-    <div className="absolute bg-blue-600 text-white p-4 rounded-lg shadow-lg z-50 max-w-xs" style={{ top: `${position.top}px`, left: `${position.left}px` }}>
+    <div className="fixed bg-blue-600 text-white p-4 rounded-lg shadow-lg z-50 max-w-xs" style={{ top: `${position.top}px`, left: `${position.left}px` }}>
       <p className="text-sm">{player.name} {message}.</p>
     </div>
   );
 };
 
 export default PlayerModal;
-
-
-
-
-
-
-
-
-
-// const PlayerModal: React.FC<PlayerModalProps> = ({ player, position }) => {
-//     const getSpecificPlayerMessage = (player: Player): string | null => {
-//       const specificMessages: { [key: string]: string } = {
-//         "Klay Thompson": `gets paid $${player.salary.toLocaleString()} to go 0/10 in an elimination game`,
-//         "Jordan Poole": `gets paid $${player.salary.toLocaleString()} to have a -7.1 plus minus and stare at baddies on the sideline`,
-//         "Stephen Curry": `gets paid $${player.salary.toLocaleString()}...`,
-//         "Nikola Jokic": `gets paid $${player.salary.toLocaleString()} to daydream about horses in Serbia all game`,
-//         "LeBron James": `gets paid $${player.salary.toLocaleString()} to practice nepotism`,
-//         "Zion Williamson": `gets paid $${player.salary.toLocaleString()} to start a food blogging channel`,
-//         "Ja Morant": `gets paid $${player.salary.toLocaleString()} to practice his sharpshooting on the sidelines`,
-//       };

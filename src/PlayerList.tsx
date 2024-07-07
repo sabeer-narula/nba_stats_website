@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { Player } from './types';
 import PlayerModal from './PlayerModal';
@@ -14,18 +14,13 @@ const PlayerList: React.FC<PlayerListProps> = ({ players, title, isUnderpaid }) 
   const [modalPosition, setModalPosition] = useState({ top: 0, left: 0 });
   const [searchTerm, setSearchTerm] = useState('');
   const [displayedPlayers, setDisplayedPlayers] = useState<Player[]>(players.slice(0, 20));
-  const listRef = useRef<HTMLDivElement>(null);
 
   const handleMouseEnter = (player: Player, event: React.MouseEvent<HTMLLIElement>) => {
-    const listItem = event.currentTarget;
-    const listRect = listRef.current?.getBoundingClientRect();
-    const itemRect = listItem.getBoundingClientRect();
-    if (listRect) {
-      setModalPosition({
-        top: itemRect.top - listRect.top,
-        left: itemRect.right - listRect.left + 10,
-      });
-    }
+    const rect = event.currentTarget.getBoundingClientRect();
+    setModalPosition({
+      top: rect.top + window.scrollY,
+      left: rect.right + 10, // 10px to the right of the list item
+    });
     setSelectedPlayer(player);
   };
 
@@ -54,7 +49,7 @@ const PlayerList: React.FC<PlayerListProps> = ({ players, title, isUnderpaid }) 
         onChange={handleSearch}
         className="w-full p-2 mb-4 border rounded"
       />
-      <div ref={listRef} id="scrollableDiv" style={{ height: '600px', overflow: 'auto' }}>
+      <div id="scrollableDiv" style={{ height: '600px', overflow: 'auto' }}>
         <InfiniteScroll
           dataLength={displayedPlayers.length}
           next={fetchMoreData}
@@ -77,7 +72,13 @@ const PlayerList: React.FC<PlayerListProps> = ({ players, title, isUnderpaid }) 
           </ul>
         </InfiniteScroll>
       </div>
-      {selectedPlayer && <PlayerModal player={selectedPlayer} position={modalPosition} isUnderpaid={isUnderpaid} />}
+      {selectedPlayer && (
+        <PlayerModal
+          player={selectedPlayer}
+          position={modalPosition}
+          isUnderpaid={isUnderpaid}
+        />
+      )}
     </div>
   );
 };
